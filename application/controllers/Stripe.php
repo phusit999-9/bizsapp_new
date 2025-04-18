@@ -66,7 +66,6 @@ class Stripe extends CI_Controller {
 
      
 
-    //   $stripeSecret = 'sk_test_51GaDAnB5TcGYIInBQ0lO3ucMUze485kGRTBghAn8ordblplJrUy3a439LRqkLICpxAh3U0Id6Ua28c2r2Dg2Gt0a00RekNi3LH';
 
  
 
