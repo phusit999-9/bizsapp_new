@@ -2204,6 +2204,9 @@ CREATE TABLE `db_sales` (
   `invoice_terms` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE `db_sales`
+ADD COLUMN `vat` DOUBLE(20,2) DEFAULT 0.00 AFTER `grand_total`;
+
 --
 -- Dumping data for table `db_sales`
 --

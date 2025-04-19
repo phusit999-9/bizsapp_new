@@ -1935,7 +1935,7 @@ class Reports_model extends CI_Model {
 				$this->db->where("a.warehouse_id",$warehouse_id);
 		}
 
-		$this->db->select("a.warehouse_id,a.store_id,");
+		$this->db->select("a.warehouse_id,a.store_id,a.vat,");
 		$this->db->select("a.id,a.sales_code,a.sales_date,b.customer_name,a.grand_total,b.tax_number");
 		$this->db->select("a.tot_discount_to_all_amt");
 		$this->db->select("a.round_off");
@@ -1983,10 +1983,14 @@ class Reports_model extends CI_Model {
 								->where("sales_id",$res1->id)->get("db_salesitems")->row();
 
 				$q3 = $this->db->select("COALESCE(tot_discount_to_all_amt, 0) as tot_discount_to_all_amt")
+								->select("COALESCE(vat, 0) as vat") // เพิ่มบรรทัดนี้
 								->where("id", $res1->id)
 								->get("db_sales")
 								->row();
+				  
 				$tot_discount_to_all_amt = $q3->tot_discount_to_all_amt;
+				$vat_sale = $q3->vat;
+				  
 				$tax_amt = $q2->tax_amt;
 				$discount_amt = $q2->discount_amt;
 				$price_per_unit = $q2->price_per_unit;
@@ -2006,7 +2010,7 @@ class Reports_model extends CI_Model {
 
 				echo "<td class='text-center'>".show_date($res1->sales_date)."</td>";
 				echo "<td>".$res1->customer_name."</td>";
-				echo "<td class='text-center'>".$company_vat_no."</td>";
+				echo "<td class='text-center'>".$res1->vat."</td>";
 			//	echo "<td class='text-right'>".store_number_format($price_per_unit)."</td>";
 				echo "<td class='text-right'>".store_number_format($tot_discount_to_all_amt)."</td>";
 				echo "<td class='text-right'>".store_number_format($tax_amt)."</td>";

@@ -169,6 +169,9 @@ class Pos_model extends CI_Model {
 	//Save Sales
 	public function pos_save_update(){//Save or update sales
 		$this->db->trans_begin();
+		$q1=$this->db->query("select * from db_store where status=1 and id=".get_current_store_id());
+		$res1=$q1->row();
+		$company_vat_no=$res1->vat_no;
 		extract($this->xss_html_filter(array_merge($this->data,$_POST,$_GET)));
 		//print_r($this->xss_html_filter(array_merge($this->data,$_POST,$_GET)));exit();
 
@@ -307,6 +310,7 @@ class Pos_model extends CI_Model {
 		    				'subtotal' 					=> $tot_amt,
 		    			//	'round_off' 				=> $round_off,
 		    				'grand_total' 				=> $tot_grand,
+							'vat'						=> $company_vat_no,
 		    				/*System Info*/
 		    				'created_date' 				=> $CUR_DATE,
 		    				'created_time' 				=> $CUR_TIME,

@@ -168,7 +168,8 @@ class Sales_model extends CI_Model {
 		//Filtering XSS and html escape from user inputs 
 		extract($this->xss_html_filter(array_merge($this->data,$_POST,$_GET)));
 		//echo "<pre>";print_r($this->xss_html_filter(array_merge($this->data,$_POST,$_GET)));exit();
-		
+		$q1=$this->db->query("select * from db_store where status=1 and id=".get_current_store_id());
+    	$res1=$q1->row();
 		//varify max sales usage of the package subscription
 		validate_package_offers('max_invoices','db_sales');
 		//END
@@ -272,6 +273,7 @@ class Sales_model extends CI_Model {
 		    				'subtotal' 					=> $tot_subtotal_amt,
 		    				'round_off' 				=> $tot_round_off_amt,
 		    				'grand_total' 				=> $tot_total_amt,
+							'vat'						=> $res1->vat_no,
 		    				'sales_note' 				=> $sales_note,
 		    				/*System Info*/
 		    				'created_date' 				=> $CUR_DATE,

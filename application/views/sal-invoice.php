@@ -60,33 +60,36 @@
     <?php
     $CI =& get_instance();
         
-    $q3=$this->db->query("SELECT b.coupon_id,b.coupon_amt, b.due_date,b.quotation_id,b.store_id,a.customer_name,a.mobile,a.phone,a.gstin,a.tax_number,a.email,a.shippingaddress_id,a.id,
-                           a.opening_balance,a.country_id,a.state_id,a.city,
-                           a.postcode,a.address,b.sales_date,b.created_time,b.reference_no,
-                           b.sales_code,b.sales_status,b.sales_note,b.invoice_terms,
-                           coalesce(b.grand_total,0) as grand_total,
-                           coalesce(b.subtotal,0) as subtotal,
-                           coalesce(b.paid_amount,0) as paid_amount,
-                           coalesce(b.other_charges_input,0) as other_charges_input,
-                           other_charges_tax_id,
-                           coalesce(b.other_charges_amt,0) as other_charges_amt,
-                           discount_to_all_input,
-                           b.discount_to_all_type,
-                           coalesce(b.tot_discount_to_all_amt,0) as tot_discount_to_all_amt,
-                           coalesce(b.round_off,0) as round_off,
-                           b.payment_status,b.pos
+    $q3 = $this->db->query("SELECT 
+    b.coupon_id, b.coupon_amt, b.due_date, b.quotation_id, b.store_id,
+    a.customer_name, a.mobile, a.phone, a.gstin, a.tax_number, a.email, a.shippingaddress_id, a.id,
+    a.opening_balance, a.country_id, a.state_id, a.city,
+    a.postcode, a.address, b.sales_date, b.created_time, b.reference_no,
+    b.sales_code, b.sales_status, b.sales_note, b.invoice_terms, b.vat,
+    coalesce(b.grand_total,0) as grand_total,
+    coalesce(b.subtotal,0) as subtotal,
+    coalesce(b.paid_amount,0) as paid_amount,
+    coalesce(b.other_charges_input,0) as other_charges_input,
+    other_charges_tax_id,
+    coalesce(b.other_charges_amt,0) as other_charges_amt,
+    discount_to_all_input,
+    b.discount_to_all_type,
+    coalesce(b.tot_discount_to_all_amt,0) as tot_discount_to_all_amt,
+    coalesce(b.round_off,0) as round_off,
+    b.payment_status, b.pos
 
-                           FROM db_customers a,
-                           db_sales b 
-                           WHERE 
-                           a.`id`=b.`customer_id` AND 
-                           b.`id`='$sales_id' AND b.store_id=".get_current_store_id());
+    FROM db_customers a, db_sales b 
+    WHERE a.id = b.customer_id 
+      AND b.id = '$sales_id' 
+      AND b.store_id = " . get_current_store_id());
+
                         
     
     $res3=$q3->row();
     if($res3->store_id!=get_current_store_id()){
       $CI->show_access_denied_page();exit();
     }
+    $vat_sale=$res3->vat;
     $customer_id=$res3->id;
     $customer_name=$res3->customer_name;
     $customer_mobile=$res3->mobile;
@@ -413,12 +416,12 @@
                 $dis = ($grand_total + $tot_discount_to_all_amt) / 100 ; //คำนวน 1 เปอร์เซ็นต์
                 $dis_tax = ($tot_discount_to_all_amt / $dis) ; // คำนวนส่วนลดเป็น เปอร์เซ็นต์
               
-                $tax_in =($tot_tax_amt / $res2->tax)*(100+$res2->tax ) ;  //ราคาสินค้ารวมVAT             
+                $tax_in =($tot_tax_amt / $vat_sale)*(100+$vat_sale ) ;  //ราคาสินค้ารวมVAT             
                 $tax_no = ($grand_total + $tot_discount_to_all_amt)- $tax_in ;  //ราคาสินค้ายกเว้นVAT
 
                 $tax_no_sub = $tax_no - ($tax_no/100 * $dis_tax); //ราคาสินค้ายกเว้นVAT  -ลบส่วนลดแล้ว
                 $tax_in_sub = $tax_in - ($tax_in/100 * $dis_tax);    //ราคาสินค้ารวมVAT  -ลบส่วนลดแล้ว                                                  
-                $vat = $tax_in_sub / (100+ $res2->tax)*$res2->tax;
+                $vat = $tax_in_sub / (100+ $vat_sale)*$vat_sale;
 
                   
               }
@@ -586,10 +589,10 @@
                         </tr>
 
                        <tr class='text-primary'>
-                          <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('tax_amount') .( $company_vat_no)." % "; ?></b></th>
+                          <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('tax_amount') .( $vat_sale)." % "; ?></b></th>
                             <th class="text-right" style="padding-left:10%;font-size: 17px;">
                             <h4><b id="total_amt" name="total_amt"><?=store_number_format(  $vat);?></b> บาท</h4>
-                            <h5 style="color: red;"><b id="total_amt" name="total_amt">vat: <?=store_number_format(  $res2->tax);?></b></h5>
+                            <h5 style="color: red;"><b id="total_amt" name="total_amt">vat: <?=store_number_format(  $vat_sale);?></b></h5>
 
                             <th>
                          </th>

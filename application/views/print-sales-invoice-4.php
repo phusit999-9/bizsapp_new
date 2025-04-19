@@ -123,7 +123,7 @@
   $q3 = $this->db->query("SELECT b.coupon_id,b.coupon_amt,b.due_date,b.customer_previous_due,b.customer_total_due,a.customer_name,a.mobile,a.phone,a.gstin,a.tax_number,a.email,a.shippingaddress_id,
                            a.opening_balance,a.country_id,a.state_id,a.created_by,
                            a.postcode,a.address,b.sales_date,b.created_time,b.reference_no,
-                           b.sales_code,b.sales_note,b.sales_status,b.invoice_terms,
+                           b.sales_code,b.sales_note,b.sales_status,b.invoice_terms,b.vat,
                            coalesce(b.grand_total,0) as grand_total,
                            coalesce(b.subtotal,0) as subtotal,a.sales_due,
                            coalesce(b.paid_amount,0) as paid_amount,
@@ -145,6 +145,7 @@
 
 
   $res3 = $q3->row();
+  $vat_sale=$res3->vat;
   $customer_name = $res3->customer_name;
   $customer_mobile = $res3->mobile;
   $customer_phone = $res3->phone;
@@ -480,12 +481,12 @@
        $dis = ($grand_total + $tot_discount_to_all_amt) / 100 ; //คำนวน 1 เปอร์เซ็นต์
        $dis_tax = ($tot_discount_to_all_amt / $dis) ; // คำนวนส่วนลดเป็น เปอร์เซ็นต์
      
-       $tax_in =($tot_tax_amt / $res2->tax)*(100+$res2->tax ) ;  //ราคาสินค้ารวมVAT -----            
+       $tax_in =($tot_tax_amt / $vat_sale)*(100+$vat_sale ) ;  //ราคาสินค้ารวมVAT -----            
        $tax_no = ($grand_total + $tot_discount_to_all_amt)- $tax_in ;  //ราคาสินค้ายกเว้นVAT -----
 
        $tax_no_sub = $tax_no - ($tax_no/100 * $dis_tax); //ราคาสินค้ายกเว้นVAT  -ลบส่วนลดแล้ว
-       $tax_in_sub = $tax_in - ($tax_in/100 * $dis_tax);  ;  //ราคาสินค้ารวมVAT  -ลบส่วนลดแล้ว                                                  
-       $vat =  $tax_in_sub / (100+ $res2->tax)*$res2->tax;
+       $tax_in_sub = $tax_in - ($tax_in/100 * $dis_tax);   //ราคาสินค้ารวมVAT  -ลบส่วนลดแล้ว                                                  
+       $vat =  $tax_in_sub / (100+ $vat_sale)*$vat_sale;
 
 
 
@@ -549,7 +550,7 @@
         <td colspan="2" class='text-right'><b><?php echo store_number_format($tax_in_sub-$vat); ?></b></td>
       </tr>
       <tr>
-        <td colspan="14" class='text-right'><b><?= $this->lang->line('tax_amount') . store_number_format($res2->tax) . " % "; ?></b></td>
+        <td colspan="14" class='text-right'><b><?= $this->lang->line('tax_amount') . store_number_format($vat_sale) . " % "; ?></b></td>
         <td colspan="2" class='text-right'><b><?php echo store_number_format($vat); ?></b></td>
       </tr>
 
