@@ -25,6 +25,7 @@
             $store_logo =
             $signature = '';
 
+         $temp_country = $country;
          $decimals = 2;
          $qty_decimals = 2;
          $invoice_terms = '';
@@ -198,7 +199,7 @@
                                           </div>
                                         
                                         
-                                        
+<!--                                         
                                           <div class="form-group">
                                              <label for="country" class="col-sm-4 control-label"><?= $this->lang->line('country'); ?></label>
                                              <div class="col-sm-8">
@@ -221,18 +222,22 @@
                                                 </select>
                                                 <span id="country_msg" style="display:none" class="text-danger"></span>
                                              </div>
-                                          </div>
+                                          </div> -->
 <!-- จังหวัด -->
 <div class="form-group">
-  <label for="province" class="col-sm-4 control-label">จังหวัด</label>
+  <label for="country" class="col-sm-4 control-label">จังหวัด</label>
   <div class="col-sm-8">
-    <select class="form-control select2" id="province" name="province" onchange="fetchDistricts(this.value)">
+    <select class="form-control select2"
+            id="country"
+            name="country"
+            style="width: 100%;"
+            onkeyup="shift_cursor(event,'state')"
+            onchange="fetchDistricts(this.value)">
       <option value="">- เลือกจังหวัด -</option>
       <?php
-        // ดึงข้อมูลจังหวัดจากตาราง provinces
         $query = $this->db->query("SELECT id, name_in_thai FROM provinces ORDER BY name_in_thai ASC");
         foreach ($query->result() as $row) {
-          $selected = ($row->id == $province) ? 'selected' : '';
+          $selected = (isset($country) && $row->id == $country) ? 'selected' : '';
           echo "<option value='{$row->id}' $selected>{$row->name_in_thai}</option>";
         }
       ?>
@@ -242,19 +247,36 @@
 
 <!-- อำเภอ -->
 <div class="form-group">
-  <label for="district" class="col-sm-4 control-label">อำเภอ</label>
+  <label for="state" class="col-sm-4 control-label">อำเภอ</label>
   <div class="col-sm-8">
-    <select class="form-control select2" id="district" name="district" onchange="fetchSubdistricts(this.value)">
+    <select class="form-control select2"
+            id="state"
+            name="state"
+            onkeyup="shift_cursor(event,'city')"
+            onchange="fetchSubdistricts(this.value)">
       <option value="">- เลือกอำเภอ -</option>
+      <?php
+        if (!empty($country)) {
+          $query = $this->db->query("SELECT id, name_in_thai FROM districts WHERE province_id = ?", [$country]);
+          foreach ($query->result() as $row) {
+            $selected = (isset($state) && $row->id == $state) ? 'selected' : '';
+            echo "<option value='{$row->id}' $selected>{$row->name_in_thai}</option>";
+          }
+        }
+      ?>
     </select>
   </div>
 </div>
 
 <!-- ตำบล -->
 <div class="form-group">
-  <label for="subdistrict" class="col-sm-4 control-label">ตำบล</label>
+  <label for="city" class="col-sm-4 control-label">ตำบล</label>
   <div class="col-sm-8">
-    <select class="form-control select2" id="subdistrict" name="subdistrict">
+    <select class="form-control select2"
+            id="city"
+            name="city"
+            onkeyup="shift_cursor(event,'postcode')"
+            >
       <option value="">- เลือกตำบล -</option>
     </select>
   </div>
@@ -263,6 +285,8 @@
 
 
 
+
+<!-- 
                                           <div class="form-group">
                                              <label for="state" class="col-sm-4 control-label"><?= $this->lang->line('state'); ?></label>
                                              <div class="col-sm-8">
@@ -285,15 +309,17 @@
                                                 </select>
                                                 <span id="state_msg" style="display:none" class="text-danger"></span>
                                              </div>
-                                          </div>
+                                          </div> -->
 
-                                          <div class="form-group">
+                                          <!-- <div class="form-group">
                                              <label for="city" class="col-sm-4 control-label"><?= $this->lang->line('city'); ?><label class="text-danger">*</label></label>
                                              <div class="col-sm-8">
                                                 <input type="text" class="form-control" id="city" name="city" placeholder="" value="<?php print $city; ?>" onkeyup="shift_cursor(event,'postcode')">
                                                 <span id="city_msg" style="display:none" class="text-danger"></span>
                                              </div>
-                                          </div>
+                                          </div> -->
+
+                              
                                           <div class="form-group">
                                              <label for="postcode" class="col-sm-4 control-label"><?= $this->lang->line('postcode'); ?></label>
                                              <div class="col-sm-8">
@@ -1012,22 +1038,40 @@
 <script>
   $(document).ready(function () {
     $('.select2').select2();
+
+    <?php if (!empty($country) && !empty($state)) { ?>
+      fetchDistricts(<?= $country ?>, <?= $state ?>, <?= isset($city) ? $city : 'null' ?>);
+    <?php } ?>
   });
 
-  function fetchDistricts(provinceId) {
+  function fetchDistricts(provinceId, selectedStateId = null, selectedCityId = null) {
     $.post("<?= base_url('location/get_districts'); ?>", { province_id: provinceId }, function(data) {
-      $('#district').html(data);
-      // รีเซ็ต dropdown ตำบลเมื่อเปลี่ยนจังหวัด
-      $('#subdistrict').html('<option value="">- เลือกตำบล -</option>');
+      $('#state').html(data);
+      if (selectedStateId) {
+        $('#state').val(selectedStateId).trigger('change');
+        fetchSubdistricts(selectedStateId, selectedCityId);
+      } else {
+        $('#city').html('<option value="">- เลือกตำบล -</option>').trigger('change');
+      }
     });
   }
 
-  function fetchSubdistricts(districtId) {
+  function fetchSubdistricts(districtId, selectedCityId = null) {
     $.post("<?= base_url('location/get_subdistricts'); ?>", { district_id: districtId }, function(data) {
-      $('#subdistrict').html(data);
+      $('#city').html(data);
+
+      // 👇 ดีเลย์สั้นๆ เพื่อให้ option ตำบล render เสร็จ
+      if (selectedCityId) {
+        setTimeout(() => {
+          $('#city').val(selectedCityId).trigger('change');
+        }, 100);
+      }
     });
   }
 </script>
+
+
+
 
 
 
