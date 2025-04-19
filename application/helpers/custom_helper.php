@@ -109,7 +109,7 @@
     }
     $CI =& get_instance();
     if($CI->session->userdata('view_time')=='24') {
-      return date('h:i',strtotime($time));
+      return date('H:i',strtotime($time));
     }
     else{
       return date('h:i a',strtotime($time));

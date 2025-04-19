@@ -67,7 +67,7 @@ class MY_Controller extends CI_Controller{
 
             date_default_timezone_set(trim($query1->row()->timezone));
 
-            $time_format = ($query1->row()->time_format=='24') ? date("h:i:s") : date("h:i:s a");
+            $time_format = ($query1->row()->time_format=='24') ? date("H:i:s") : date("h:i:s a");
 
             $date_view_format = trim($query1->row()->date_format);
             $this->session->set_userdata(array('view_date'  => $date_view_format));

@@ -151,22 +151,48 @@
                 <strong style="font-size:16px; "><?= $store_name; ?></strong><br>
 		<!--	<?php echo (!empty(trim($company_vat_number)) && vat_number()) ? $this->lang->line(' ')."  ".$company_vat_number."<br>" : '';?>  -->
         	<?php echo (!empty(trim($company_address))) ? $this->lang->line('company_address')."".$company_address." " : '';?> 	
-			<?php 
-                  
-                  if(!empty($company_city)){
-                    echo "  " .$company_city;
-                  }
-                  if(!empty($company_state)){
-                    echo "  " .$company_state;
-                  }
-                  if(!empty($company_country)){
-                    echo "  " .$company_country;
-                  }
-                            
-                  if(!empty($company_postcode)){
-                    echo "-" .$company_postcode;
-                  }
-                ?> <br/>	         
+			<?php
+  $city_name = '';
+  $state_name = '';
+  $country_name = '';
+
+  // ดึงชื่อตำบล
+  if (!empty($company_city)) {
+    $q = $this->db->get_where('subdistricts', ['id' => $company_city]);
+    if ($q->num_rows() > 0) {
+      $city_name = 'ต.' . $q->row()->name_in_thai;
+    }
+  }
+
+  // ดึงชื่ออำเภอ
+  if (!empty($company_state)) {
+    $q = $this->db->get_where('districts', ['id' => $company_state]);
+    if ($q->num_rows() > 0) {
+      $state_name = 'อ.' . $q->row()->name_in_thai;
+    }
+  }
+
+  // ดึงชื่อจังหวัด
+  if (!empty($company_country)) {
+    $q = $this->db->get_where('provinces', ['id' => $company_country]);
+    if ($q->num_rows() > 0) {
+      $country_name = 'จ.' . $q->row()->name_in_thai;
+    }
+  }
+
+  // รวมและแสดงผล
+  $addressParts = [];
+
+  if (!empty($city_name)) $addressParts[] = $city_name;
+  if (!empty($state_name)) $addressParts[] = $state_name;
+  if (!empty($country_name)) $addressParts[] = $country_name;
+
+  echo implode(' ', $addressParts); // ต. อ. จ.
+
+  if (!empty($company_postcode)) {
+    echo ' ' . $company_postcode;
+  }
+?> <br/>	         
 		      		        
 		     <?php echo (!empty(trim($company_gst_no)) && gst_number()) ? $this->lang->line('gst_number').": ".$company_gst_no."<br>" : '';?>
 	    

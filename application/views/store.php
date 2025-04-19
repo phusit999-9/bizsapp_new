@@ -283,6 +283,18 @@
 </div>
 
 
+<!-- Zip Code -->
+<div class="form-group">
+  <label for="postcode" class="col-sm-4 control-label">รหัสไปรษณีย์</label>
+  <div class="col-sm-8">
+    <input type="text" class="form-control"
+           id="postcode"
+           name="postcode"
+           onkeyup="shift_cursor(event,'address')"
+           readonly
+           placeholder="รหัสไปรษณีย์จะเติมอัตโนมัติ" />
+  </div>
+</div>
 
 
 
@@ -320,13 +332,13 @@
                                           </div> -->
 
                               
-                                          <div class="form-group">
+                                          <!-- <div class="form-group">
                                              <label for="postcode" class="col-sm-4 control-label"><?= $this->lang->line('postcode'); ?></label>
                                              <div class="col-sm-8">
                                                 <input type="text" class="form-control no_special_char_no_space" id="postcode" name="postcode" placeholder="" value="<?php print $postcode; ?>" onkeyup="shift_cursor(event,'address')">
                                                 <span id="postcode_msg" style="display:none" class="text-danger"></span>
                                              </div>
-                                          </div>
+                                          </div> -->
                                           <div class="form-group">
                                              <label for="address" class="col-sm-4 control-label"><?= $this->lang->line('address'); ?><label class="text-danger">*</label></label>
                                              <div class="col-sm-8">
@@ -1036,39 +1048,53 @@
       })
    </script>
 <script>
-  $(document).ready(function () {
-    $('.select2').select2();
+$(document).ready(function () {
+  $('.select2').select2();
 
-    <?php if (!empty($country) && !empty($state)) { ?>
-      fetchDistricts(<?= $country ?>, <?= $state ?>, <?= isset($city) ? $city : 'null' ?>);
-    <?php } ?>
+  // โหลดตอนเปิดหน้าหากมีค่า
+  <?php if (!empty($country) && !empty($state)) { ?>
+    fetchDistricts(<?= $country ?>, <?= $state ?>, <?= isset($city) ? $city : 'null' ?>);
+  <?php } ?>
+});
+
+function fetchDistricts(provinceId, selectedStateId = null, selectedCityId = null) {
+  $.post("<?= base_url('location/get_districts'); ?>", { province_id: provinceId }, function (data) {
+    $('#state').html(data);
+    if (selectedStateId) {
+      $('#state').val(selectedStateId).trigger('change');
+      fetchSubdistricts(selectedStateId, selectedCityId);
+    } else {
+      $('#city').html('<option value="">- เลือกตำบล -</option>');
+      $('#postcode').val('');
+    }
   });
+}
 
-  function fetchDistricts(provinceId, selectedStateId = null, selectedCityId = null) {
-    $.post("<?= base_url('location/get_districts'); ?>", { province_id: provinceId }, function(data) {
-      $('#state').html(data);
-      if (selectedStateId) {
-        $('#state').val(selectedStateId).trigger('change');
-        fetchSubdistricts(selectedStateId, selectedCityId);
-      } else {
-        $('#city').html('<option value="">- เลือกตำบล -</option>').trigger('change');
-      }
+function fetchSubdistricts(districtId, selectedCityId = null) {
+  $.post("<?= base_url('location/get_subdistricts'); ?>", { district_id: districtId }, function (data) {
+    const parsed = JSON.parse(data);
+    let options = '<option value="">- เลือกตำบล -</option>';
+    parsed.forEach(function (item) {
+      options += `<option value="${item.id}" data-zip="${item.zip_code}">${item.name_in_thai}</option>`;
     });
-  }
+    $('#city').html(options);
 
-  function fetchSubdistricts(districtId, selectedCityId = null) {
-    $.post("<?= base_url('location/get_subdistricts'); ?>", { district_id: districtId }, function(data) {
-      $('#city').html(data);
+    if (selectedCityId) {
+      setTimeout(() => {
+        $('#city').val(selectedCityId).trigger('change');
+        const zip = $('#city option:selected').data('zip');
+        $('#postcode').val(zip || '');
+      }, 100);
+    }
+  });
+}
 
-      // 👇 ดีเลย์สั้นๆ เพื่อให้ option ตำบล render เสร็จ
-      if (selectedCityId) {
-        setTimeout(() => {
-          $('#city').val(selectedCityId).trigger('change');
-        }, 100);
-      }
-    });
-  }
+$('#city').on('change', function () {
+  const zip = $('option:selected', this).data('zip');
+  $('#postcode').val(zip || '');
+});
 </script>
+
 
 
 

@@ -185,31 +185,70 @@ class MyPDF extends TCPDF {
     }
 
     public function _get_company_details()
-    {
-        $store = $this->store;
-        $txt='';
-        $txt .= '<span style="font-size:22px;">'.$store->store_name.'</span>';
-        $txt .= '<br><span>'.$store->address.'</span>';    
-        $txt .= '<span> '.$store->city.'</span>';    
-        $txt .= '<span> '.$store->state.'</span>';  
-        $txt .= '<span> '.$store->country.'</span>';   
-        $txt .= '<span> '.$store->postcode.'</span>';  
-        $txt .= '<br><span ><b>';
+{
+    $store = $this->store;
+    $CI = $this->CI;
 
- 
-        if($this->_invoice_format=='Default'){
-           $txt .= $this->CI->lang->line('').' :</b> '.$store->tax_no; 
+    // โหลดชื่อ ตำบล อำเภอ จังหวัด จาก ID
+    $city_name = '';
+    $state_name = '';
+    $country_name = '';
+
+    if (!empty($store->city)) {
+        $q = $CI->db->get_where('subdistricts', ['id' => $store->city]);
+        if ($q->num_rows() > 0) {
+            $city_name = 'ต. ' . $q->row()->name_in_thai;
         }
-        else{
-            $txt .= $this->CI->lang->line('gst_number').' </b> '.$store->gst_no; 
-          
-        } 
-        $txt .= '<br><span><b>'.$this->CI->lang->line('phone').': </b>'.$store->mobile.'<b></span>';         
-                    
-        $this->setFont($this->get_font_name(), '', 16, '', true);
-        $this->writeHTMLCell($w =135, 0, $x='60', $y='16', $txt, $border = 0, 0, 0, true, '', true);
-        return $this;
     }
+
+    if (!empty($store->state)) {
+        $q = $CI->db->get_where('districts', ['id' => $store->state]);
+        if ($q->num_rows() > 0) {
+            $state_name = 'อ. ' . $q->row()->name_in_thai;
+        }
+    }
+
+    if (!empty($store->country)) {
+        $q = $CI->db->get_where('provinces', ['id' => $store->country]);
+        if ($q->num_rows() > 0) {
+            $country_name = 'จ. ' . $q->row()->name_in_thai;
+        }
+    }
+
+    $txt = '';
+    $txt .= '<span style="font-size:22px;">' . $store->store_name . '</span>';
+    $txt .= '<br><span>' . $store->address . '</span>';
+
+    $location_line = [];
+
+    if (!empty($city_name)) $location_line[] = $city_name;
+    if (!empty($state_name)) $location_line[] = $state_name;
+    if (!empty($country_name)) $location_line[] = $country_name;
+
+    $txt .= '<span>' . implode(' ', $location_line);
+
+    if (!empty($store->postcode)) {
+        $txt .= ' ' . $store->postcode;
+    }
+
+    $txt .= '</span>';
+
+    // Tax / GST
+    $txt .= '<br><span ><b>';
+    if ($this->_invoice_format == 'Default') {
+        $txt .= $this->CI->lang->line('') . ' :</b> ' . $store->tax_no;
+    } else {
+        $txt .= $this->CI->lang->line('gst_number') . ' </b> ' . $store->gst_no;
+    }
+
+    // Phone
+    $txt .= '<br><span><b>' . $this->CI->lang->line('phone') . ': </b>' . $store->mobile . '<b></span>';
+
+    $this->setFont($this->get_font_name(), '', 16, '', true);
+    $this->writeHTMLCell($w = 135, 0, $x = '60', $y = '16', $txt, $border = 0, 0, 0, true, '', true);
+    return $this;
+}
+
 
    public function _get_qr()
     {

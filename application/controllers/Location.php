@@ -21,10 +21,17 @@ class Location extends CI_Controller {
     public function get_subdistricts() {
         $district_id = $this->input->post('district_id');
         $query = $this->db->get_where('subdistricts', ['district_id' => $district_id]);
-
-        echo '<option value="">- เลือกตำบล -</option>';
+      
+        $result = [];
         foreach ($query->result() as $row) {
-            echo "<option value='{$row->id}'>{$row->name_in_thai}</option>";
+          $result[] = [
+            'id' => $row->id,
+            'name_in_thai' => $row->name_in_thai,
+            'zip_code' => $row->zip_code,
+          ];
         }
-    }
+      
+        echo json_encode($result);
+      }
+      
 }

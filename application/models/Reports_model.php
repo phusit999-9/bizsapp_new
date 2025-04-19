@@ -1970,6 +1970,7 @@ class Reports_model extends CI_Model {
 			$i=0;
 			$tot_price_per_unit=0;
 			$tot_discount_amt=0;
+			$tot_discount_to_all_amt = 0;
 			$tot_tax_amt=0;
 			$tot_round_off=0;
 			$tot_grand_total=0;
@@ -1980,6 +1981,12 @@ class Reports_model extends CI_Model {
 								->select("COALESCE(sum(price_per_unit),0) as price_per_unit")
 								->select("COALESCE(sum(discount_amt),0) as discount_amt")
 								->where("sales_id",$res1->id)->get("db_salesitems")->row();
+
+				$q3 = $this->db->select("COALESCE(tot_discount_to_all_amt, 0) as tot_discount_to_all_amt")
+								->where("id", $res1->id)
+								->get("db_sales")
+								->row();
+				$tot_discount_to_all_amt = $q3->tot_discount_to_all_amt;
 				$tax_amt = $q2->tax_amt;
 				$discount_amt = $q2->discount_amt;
 				$price_per_unit = $q2->price_per_unit;
@@ -2001,13 +2008,13 @@ class Reports_model extends CI_Model {
 				echo "<td>".$res1->customer_name."</td>";
 				echo "<td class='text-center'>".$company_vat_no."</td>";
 			//	echo "<td class='text-right'>".store_number_format($price_per_unit)."</td>";
-				echo "<td class='text-right'>".store_number_format($discount_amt)."</td>";
+				echo "<td class='text-right'>".store_number_format($tot_discount_to_all_amt)."</td>";
 				echo "<td class='text-right'>".store_number_format($tax_amt)."</td>";
 				//echo "<td class='text-right'>".store_number_format($res1->round_off)."</td>";
 				echo "<td class='text-right'>".store_number_format($res1->grand_total)."</td>";
 				echo "</tr>";
 				$tot_price_per_unit+=$price_per_unit;
-				$tot_discount_amt+=$discount_amt;
+				$tot_discount_amt+=$tot_discount_to_all_amt;
 				$tot_tax_amt+=$tax_amt;
 			//	$tot_round_off+=$res1->round_off;
 				$tot_grand_total+=$res1->grand_total;
@@ -2019,6 +2026,11 @@ class Reports_model extends CI_Model {
 				$total_columns_count ++;
 			}
 			
+			/**
+			 * $tot_discount_to_all_amt ส่วนลดระดับเอกสารแต่ละเอกสาร
+			 * $tot_discount_amt รวมส่วนลดระดับเอกสารแต่ละเอกสาร
+			 */
+
 			echo "<tr>
 					  <td class='text-right text-bold' colspan='$total_columns_count'><b>รวมเงิน :</b></td>
 				<!--	  <td class='text-right text-bold'>".store_number_format($tot_price_per_unit)."</td> -->
