@@ -230,49 +230,20 @@
             <strong><?php echo  $store_name; ?></strong><br>           
             <?php echo  $company_address; ?> 
                      
-            <?php
-  $city_name = '';
-  $state_name = '';
-  $country_name = '';
-
-  // ดึงชื่อตำบล
-  if (!empty($company_city)) {
-    $q = $this->db->get_where('subdistricts', ['id' => $company_city]);
-    if ($q->num_rows() > 0) {
-      $city_name = 'ต.' . $q->row()->name_in_thai;
-    }
-  }
-
-  // ดึงชื่ออำเภอ
-  if (!empty($company_state)) {
-    $q = $this->db->get_where('districts', ['id' => $company_state]);
-    if ($q->num_rows() > 0) {
-      $state_name = 'อ.' . $q->row()->name_in_thai;
-    }
-  }
-
-  // ดึงชื่อจังหวัด
-  if (!empty($company_country)) {
-    $q = $this->db->get_where('provinces', ['id' => $company_country]);
-    if ($q->num_rows() > 0) {
-      $country_name = 'จ.' . $q->row()->name_in_thai;
-    }
-  }
-
-  // รวมและแสดงผล
-  $addressParts = [];
-
-  if (!empty($city_name)) $addressParts[] = $city_name;
-  if (!empty($state_name)) $addressParts[] = $state_name;
-  if (!empty($country_name)) $addressParts[] = $country_name;
-
-  echo implode(' ', $addressParts); // ต. อ. จ.
-
-  if (!empty($company_postcode)) {
-    echo ' ' . $company_postcode;
-  }
-?>
-
+            <?php  
+               if(!empty($company_city)){
+               echo "  " .$company_city;
+                }           
+              if(!empty($company_state)){
+                echo "  " .$company_state;
+              }             
+              if(!empty($company_country)){
+                echo "  " .$company_country;
+              }
+              if(!empty($company_postcode)){
+                echo "-" .$company_postcode;
+              }
+            ?>
             <br/>
             
             <?php echo (!empty(trim($company_gst_no)) && gst_number()) ? $this->lang->line('gst_number').": ".$company_gst_no."   " : '';?>
@@ -368,7 +339,7 @@
               <th class='text-center'><?= $this->lang->line('total_item_price'); ?></th>
               <th class='text-center'><?= $this->lang->line('discount_amount'); ?></th>
               <th class='text-center'><?= $this->lang->line('vat'); ?></th>
-              <th class='text-center'><?= $this->lang->line('tax_amount'); ?></th>           
+          <th class='text-center'><?= $this->lang->line('tax_amount'); ?></th>          
               <th class='text-center'><?= $this->lang->line('unit_cost'); ?></th>
               <th class='text-center'><?= $this->lang->line('total_amount'); ?></th>
             </tr>
@@ -421,7 +392,7 @@
                   echo "<td class='text-right'>".store_number_format($discount_amt)."</td>";
               //    echo "<td class='text-right'>".$discount."</td>";
                   echo "<td class='text-right'>".store_number_format($res2->tax)."%<br>".$res2->tax_name."[".$str."]</td>";
-                  echo "<td class='text-right'>".store_number_format($res2->tax_amt)."</td>";
+                 echo "<td class='text-right'>".store_number_format($res2->tax_amt)."</td>";
                   echo "<td class='text-right'>".store_number_format( $unit_cost)."</td>";
                   echo "<td class='text-right'>".store_number_format($res2->total_cost)."</td>";
                   echo "</tr>";  
@@ -434,31 +405,20 @@
                   $tot_total_cost_tax = $tot_total_cost -$tot_tax_amt;
                   
 
-              /*    $dis = ($grand_total + $tot_discount_to_all_amt) / 100 ;
-                  $dis_tax = ($tot_discount_to_all_amt / $dis) ;
-                
-                  $tax_in =($tot_tax_amt / $res2->tax)*(100+$res2->tax ) ;               
-                  $tax_no = ($grand_total + $tot_discount_to_all_amt)- $tax_in ;
-                  $tax_no_sub = $tax_no - ($tax_no/100) * $dis_tax;
-                  $tax_vat = $tax_in -($tax_in /100 ) * $dis_tax;  ;                               
-                  $vat =  $tax_vat / (100+ $res2->tax)*$res2->tax;
-                  */
-                  
-
-                  $dis = $subtotal / 100 ;
-                  $dis_total = $tot_discount_to_all_amt / $dis ;
+                                
               
-                  $tax_no = $tot_price_zero_vat;
-                  $tax_in = $subtotal - $tot_price_zero_vat;
-                 
-                  $tax_non = $tax_no - (($tax_no /100) * $dis_total) ;
-                  $tax_inn = $tax_in - (($tax_in/100) * $dis_total) ;
+                 $dis_in_tax = $subtotal - $tot_price_zero_vat; //สินค้ารวมvat
+                 $dis_non_tax = $tot_price_zero_vat; //ยกเว้น vat
+            
+                $dis = ($grand_total + $tot_discount_to_all_amt) / 100 ; //คำนวน 1 เปอร์เซ็นต์
+                $dis_tax = ($tot_discount_to_all_amt / $dis) ; // คำนวนส่วนลดเป็น เปอร์เซ็นต์
+              
+                $tax_in =($tot_tax_amt / $res2->tax)*(100+$res2->tax ) ;  //ราคาสินค้ารวมVAT             
+                $tax_no = ($grand_total + $tot_discount_to_all_amt)- $tax_in ;  //ราคาสินค้ายกเว้นVAT
 
-                  $vat =  $tax_inn / (100+ $res2->tax)*$res2->tax;
-           
-                  
-
-
+                $tax_no_sub = $tax_no - ($tax_no/100 * $dis_tax); //ราคาสินค้ายกเว้นVAT  -ลบส่วนลดแล้ว
+                $tax_in_sub = $tax_in - ($tax_in/100 * $dis_tax);    //ราคาสินค้ารวมVAT  -ลบส่วนลดแล้ว                                                  
+                $vat = $tax_in_sub / (100+ $res2->tax)*$res2->tax;
 
                   
               }
@@ -474,7 +434,7 @@
                 <td></td>
                 <td><?= store_number_format($tot_discount_amt) ;?></td>
                 <td></td>
-                <td><?= store_number_format($tot_tax_amt) ;?></td>
+                <td><?= store_number_format( $tot_tax_amt) ;?></td>
                 <td>-</td>
                 <td><?= store_number_format($tot_total_cost) ;?></td>
               </tr>
@@ -555,7 +515,7 @@
                                   echo "</tr>";
                                   $total_paid +=$res3->payment;
                                 }
-                                echo "<tr class='text-right text-bold'><td colspan='5' >รวมเงิน</td><td>".store_number_format($total_paid)."</td></tr>";
+                                echo "<tr class='text-right text-bold'><td colspan='5' >Total</td><td>".store_number_format($total_paid)."</td></tr>";
                               }
                               else{
                                 echo "<tr><td colspan='6' class='text-center text-bold'>No Previous Payments Found!!</td></tr>";
@@ -586,7 +546,7 @@
                        <tr>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_zero_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 11px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format(  $tax_no);?></b>บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $dis_non_tax );?></b>บาท</h4>
                           </th>
                        </tr>
                        <?php } ?> 
@@ -596,7 +556,7 @@
                        <tr class=''>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_item_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?=store_number_format( $tax_in);?></b> บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?=store_number_format($dis_in_tax);?></b> บาท</h4>
                           </th>
                        </tr>
                  
@@ -612,7 +572,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_zero_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 11px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $tax_non);?></b>บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $tax_no_sub );?></b>บาท</h4>
                           </th>
                        </tr>
                        <?php } ?> 
@@ -620,7 +580,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('before_amt') ; ?></b></th>
                             <th class="text-right" style="padding-left:10%;font-size: 17px;">
-                            <h4><b id="total_amt" name="total_amt"><?=store_number_format( $tax_inn - $vat);?></b> บาท</h4>
+                            <h4><b id="total_amt" name="total_amt"><?=store_number_format($tax_in_sub-$vat);?></b> บาท</h4>
                             <th>
                          </th>
                         </tr>
@@ -628,7 +588,9 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('tax_amount') .( $company_vat_no)." % "; ?></b></th>
                             <th class="text-right" style="padding-left:10%;font-size: 17px;">
-                            <h4><b id="total_amt" name="total_amt"><?=store_number_format( $vat);?></b> บาท</h4>
+                            <h4><b id="total_amt" name="total_amt"><?=store_number_format(  $vat);?></b> บาท</h4>
+                            <h5 style="color: red;"><b id="total_amt" name="total_amt">vat: <?=store_number_format(  $res2->tax);?></b></h5>
+
                             <th>
                          </th>
                         </tr>
@@ -636,7 +598,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 18px;"><?= $this->lang->line('grand_total'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 18px;">
-                             <h2><b id="total_amt" name="total_amt"><?=store_number_format($grand_total);?></b> บาท</h2>
+                             <h4><b id="total_amt" name="total_amt"><?=store_number_format($grand_total);?></b> บาท</h4>
                           </th>
                        </tr>
                     </table>
@@ -653,7 +615,7 @@
 
       <!-- this row will not appear when printing -->
       <div class="row no-print">
-        <div class="col-xs-12" style="margin-top: 10px">
+        <div class="col-xs-12">
 
         <div class="col-xs-6">
           <?php if($CI->permissions('sales_edit')) { ?>
@@ -675,20 +637,27 @@
           ใบเสร็จ POS
         </a>
 
+       
+        <a onclick="printTemplate('<?php echo $base_url; ?>sales/print_invoice/<?php echo  $sales_id ?>')" target="_blank" class="btn btn-success">
+            <i class="fa fa-file-pdf-o"></i> 
+            ใบกำกับภาษี-ส่งของ
+        </a>
+       <!-- <a onclick="generateETax('<?php echo $sales_id; ?>')" class="btn btn-info">
+            <i class="fa fa-file-pdf-o"></i> e-Tax
+        </a>  -->
+          
+          
         <a href="<?php echo $base_url; ?>pdf/sales/<?php echo  $sales_id ?>" target="_blank" class="btn btn-primary">
             <i class="fa fa-file-pdf-o"></i> 
-          ใบกำกับภาษีอย่างย่อ PDF
-        </a>          
+          กำกับภาษีอย่างย่อ-ใบเสร็จ
+        </a>
+          
         </div>
-
         <div class="col-xs-6 text-right">
-      <!--  <a onclick="printTemplate('<?php echo $base_url; ?>sales/print_invoice/<?php echo  $sales_id ?>')" target="_blank" class="btn btn-primary">
-            <i class="fa fa-file-pdf-o"></i> 
-            พิมพ์ใบกำกับภาษี
-        </a>-->
-        <a onclick="generateETax('<?php echo $sales_id; ?>')" class="btn btn-success">
-            <i class="fa fa-file-pdf-o"></i> ใบกำกับภาษี/e-Tax
-        </a>  		  
+     
+         <a onclick="generateETax('<?php echo $sales_id; ?>')" class="btn btn-success">
+         <i class="fa fa-file-pdf-o"></i> ใบกำกับภาษี/e-Tax
+         </a>  		  
         </div>
 
      </div>
