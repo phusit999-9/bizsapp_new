@@ -462,19 +462,22 @@
         $sum_of_tot_price += $tot_price;
         $tot_total_cost_tax = $tot_total_cost - $tot_tax_amt;
 
-
-        $dis = $subtotal / 100;
-        $dis_total = $tot_discount_to_all_amt / $dis;
-        $dis_tax = $subtotal - $tot_price_zero_vat;
-        $dis_non_tax = $tot_price_zero_vat;
-        $dis_non = $dis_non_tax - (($dis_non_tax / 100) * $dis_total);
-        $dis_tax_new = $dis_tax - (($dis_tax / 100) * $dis_total);
-
-        $vat_amt2 = $company_vat_no + 100;
-        $vat_amt = ($dis_tax_new / $vat_amt2) * $company_vat_no;
-
-        // $grand_total =  $dis_non +  $dis_tax_new ;
-
+      
+        $dis_in_tax =  $tot_total_cost - $tot_price_zero_vat; //สินค้ารวมvat -นำเข้า
+        $dis_non_tax = $tot_price_zero_vat; //ยกเว้น vat  - นำเข้า
+ 
+        $disc_all = ($tot_discount_to_all_amt + $grand_total ) / 100 ; //ราคารวม 1 เปอร์เซ็นต์-รวมvat
+        $dis_vat = ( $tot_tax_amt / $vat_sale) ; // คำนวน vat เป็น 1 เปอร์เซ็นต์
+        $disc = $tot_discount_to_all_amt /  $disc_all;                          
+       
+        $vat_no =  $dis_non_tax -( $dis_non_tax /100* $disc ) ; //ยกเว้นvat -ลดแล้ว
+      
+        $vat2 = $dis_vat * 107 ;    //ราคาสินค้ารวมVAT  
+        $vat = $tot_tax_amt- ($tot_tax_amt/100*$disc ) ;    //ภาษีVAT  
+                                                         
+        $vat4 = $dis_in_tax -( $dis_in_tax /100* $disc );     //ราคาสินค้าคำนวน vat  
+   
+        $vat4 -=$vat;
 
 
 
@@ -527,17 +530,17 @@
       <?php if (!empty($tot_price_zero_vat != 0)) { ?>
         <tr>
           <td colspan="13" class='text-right'><b><?= $this->lang->line('total_zero_vat'); ?></b></td>
-          <td colspan="3" class='text-right'><b><?php echo store_number_format($dis_non); ?></b></td>
+          <td colspan="3" class='text-right'><b><?php echo store_number_format( $vat_no); ?></b></td>
         </tr>
       <?php } ?>
 
       <tr>
         <td colspan="14" class='text-right'><b><?= $this->lang->line('before_amt'); ?></b></td>
-        <td colspan="2" class='text-right'><b><?php echo store_number_format($dis_tax_new - $vat_amt); ?></b></td>
+        <td colspan="2" class='text-right'><b><?php echo store_number_format( $vat4); ?></b></td>
       </tr>
       <tr>
         <td colspan="14" class='text-right'><b><?= $this->lang->line('tax_amount') . store_number_format($company_vat_no) . " % "; ?></b></td>
-        <td colspan="2" class='text-right'><b><?php echo store_number_format($vat_amt); ?></b></td>
+        <td colspan="2" class='text-right'><b><?php echo store_number_format($vat); ?></b></td>
       </tr>
 
 
