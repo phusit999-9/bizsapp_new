@@ -410,19 +410,21 @@
 
                                 
               
-                 $dis_in_tax = $subtotal - $tot_price_zero_vat; //สินค้ารวมvat
-                 $dis_non_tax = $tot_price_zero_vat; //ยกเว้น vat
+                 $dis_in_tax =  $tot_total_cost - $tot_price_zero_vat; //สินค้ารวมvat -นำเข้า
+                 $dis_non_tax = $tot_price_zero_vat; //ยกเว้น vat  - นำเข้า
+
+                 $disc_all = ($tot_discount_to_all_amt + $grand_total ) / 100 ; //ราคารวม 1 เปอร์เซ็นต์-รวมvat
+                 $dis_vat = ( $tot_tax_amt / $vat_sale) ; // คำนวน vat เป็น 1 เปอร์เซ็นต์
+                 $disc = $tot_discount_to_all_amt /  $disc_all;                          
+                
+                 $vat_no =  $dis_non_tax -( $dis_non_tax /100* $disc ) ; 
+               
+                 $vat2 = $dis_vat * 107 ;    //ราคาสินค้ารวมVAT  
+                 $vat = $tot_tax_amt- ($tot_tax_amt/100*$disc ) ;    //ราคาVAT  -ลบส่วนลดแล้ว 
+                                                                  
+                 $vat4 = $dis_in_tax -( $dis_in_tax /100* $disc );     //ราคาสินค้าคำนวน vat  
             
-                $dis = ($grand_total + $tot_discount_to_all_amt) / 100 ; //คำนวน 1 เปอร์เซ็นต์
-                $dis_tax = ($tot_discount_to_all_amt / $dis) ; // คำนวนส่วนลดเป็น เปอร์เซ็นต์
-              
-                $tax_in =($tot_tax_amt / $vat_sale)*(100+$vat_sale ) ;  //ราคาสินค้ารวมVAT             
-                $tax_no = ($grand_total + $tot_discount_to_all_amt)- $tax_in ;  //ราคาสินค้ายกเว้นVAT
-
-                $tax_no_sub = $tax_no - ($tax_no/100 * $dis_tax); //ราคาสินค้ายกเว้นVAT  -ลบส่วนลดแล้ว
-                $tax_in_sub = $tax_in - ($tax_in/100 * $dis_tax);    //ราคาสินค้ารวมVAT  -ลบส่วนลดแล้ว                                                  
-                $vat = $tax_in_sub / (100+ $vat_sale)*$vat_sale;
-
+                 $vat4 -=$vat;
                   
               }
               ?>
@@ -549,7 +551,7 @@
                        <tr>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_zero_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 11px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $dis_non_tax );?></b>บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format($dis_non_tax);?></b>บาท</h4>
                           </th>
                        </tr>
                        <?php } ?> 
@@ -559,7 +561,7 @@
                        <tr class=''>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_item_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 17px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?=store_number_format($dis_in_tax);?></b> บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?=store_number_format( $dis_in_tax);?></b> บาท</h4>
                           </th>
                        </tr>
                  
@@ -575,7 +577,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 17px;"><?= $this->lang->line('total_zero_vat'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 11px;">
-                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $tax_no_sub );?></b>บาท</h4>
+                             <h4><b id="subtotal_amt" name="subtotal_amt"><?php echo store_number_format( $vat_no);?></b>บาท</h4>
                           </th>
                        </tr>
                        <?php } ?> 
@@ -583,7 +585,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('before_amt') ; ?></b></th>
                             <th class="text-right" style="padding-left:10%;font-size: 17px;">
-                            <h4><b id="total_amt" name="total_amt"><?=store_number_format($tax_in_sub-$vat);?></b> บาท</h4>
+                            <h4><b id="total_amt" name="total_amt"><?=store_number_format( $vat4);?></b>  บาท</h4>
                             <th>
                          </th>
                         </tr>
@@ -592,7 +594,7 @@
                           <th class="text-right" style="font-size: 17px;"><b><?= $this->lang->line('tax_amount') .( $vat_sale)." % "; ?></b></th>
                             <th class="text-right" style="padding-left:10%;font-size: 17px;">
                             <h4><b id="total_amt" name="total_amt"><?=store_number_format(  $vat);?></b> บาท</h4>
-                            <h5 style="color: red;"><b id="total_amt" name="total_amt">vat: <?=store_number_format(  $vat_sale);?></b></h5>
+                    
 
                             <th>
                          </th>
@@ -601,7 +603,7 @@
                        <tr class='text-primary'>
                           <th class="text-right" style="font-size: 18px;"><?= $this->lang->line('grand_total'); ?></th>
                           <th class="text-right" style="padding-left:10%;font-size: 18px;">
-                             <h4><b id="total_amt" name="total_amt"><?=store_number_format($grand_total);?></b> บาท</h4>
+                             <h3><b id="total_amt" name="total_amt"><?=store_number_format($grand_total);?></b> บาท</h3>
                           </th>
                        </tr>
                     </table>
