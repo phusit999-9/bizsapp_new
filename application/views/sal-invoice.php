@@ -104,6 +104,7 @@
     $customer_tax_number=$res3->tax_number;
     $customer_opening_balance=$res3->opening_balance;
     $sales_date=$res3->sales_date;
+
     $due_date=(!empty($res3->due_date)) ? show_date($res3->due_date) : '';
     $created_time=$res3->created_time;
     $reference_no=$res3->reference_no;
@@ -112,6 +113,9 @@
     $sales_note=$res3->sales_note;
     $invoice_terms=$res3->invoice_terms;
     $quotation_id=$res3->quotation_id;
+
+    $iso_datetime = date('Y-m-d\TH:i:s', strtotime("$sales_date $created_time"));
+
 
     $coupon_id=$res3->coupon_id;
     $coupon_amt=$res3->coupon_amt;
@@ -206,7 +210,64 @@
      
       //  ราตารวม vat 0% จะเก็บใน $tot_price_zero_vat  _end
       
+
+      $city_name;
+    $state_name;
+    $country_name;
+
+    $country_code;
+		$state_code;
+		$city_code;
+		
+		if (!empty($company_country)) {
+			$q = $this->db->get_where('provinces', ['id' => $company_country]);
+			if ($q->num_rows() > 0) {
+			  $country_code = $q->row()->code;
+			}
+		}
+
+		// ดึงชื่ออำเภอ
+		if (!empty($company_state)) {
+			$q = $this->db->get_where('districts', ['id' => $company_state]);
+			if ($q->num_rows() > 0) {
+			  $state_code = $q->row()->code;
+			}
+		  }
+
+		// ดึงชื่อตำบล
+		if (!empty($company_city)) {
+			$q = $this->db->get_where('subdistricts', ['id' => $company_city]);
+			if ($q->num_rows() > 0) {
+			  $city_code = $q->row()->code;
+			}
+		  }
+		
+
+    // ดึงชื่อตำบล
+  if (!empty($company_city)) {
+    $q = $this->db->get_where('subdistricts', ['id' => $company_city]);
+    if ($q->num_rows() > 0) {
+      $city_name = 'ต.' . $q->row()->name_in_thai;
+    }
+  }
+
+  // ดึงชื่ออำเภอ
+  if (!empty($company_state)) {
+    $q = $this->db->get_where('districts', ['id' => $company_state]);
+    if ($q->num_rows() > 0) {
+      $state_name = 'อ.' . $q->row()->name_in_thai;
+    }
+  }
+
+  // ดึงชื่อจังหวัด
+  if (!empty($company_country)) {
+    $q = $this->db->get_where('provinces', ['id' => $company_country]);
+    if ($q->num_rows() > 0) {
+      $country_name = 'จ.' . $q->row()->name_in_thai;
+    }
+  }
     ?>
+
 
 
     <!-- Main content -->
@@ -235,13 +296,13 @@
                      
             <?php  
                if(!empty($company_city)){
-               echo "  " .$company_city;
+               echo "  " .$city_name;
                 }           
               if(!empty($company_state)){
-                echo "  " .$company_state;
+                echo "  " .$state_name;
               }             
               if(!empty($company_country)){
-                echo "  " .$company_country;
+                echo "  " .$country_name;
               }
               if(!empty($company_postcode)){
                 echo "-" .$company_postcode;
@@ -660,9 +721,17 @@
         </div>
         <div class="col-xs-6 text-right">
      
-         <a onclick="generateETax('<?php echo $sales_id; ?>')" class="btn btn-success">
-         <i class="fa fa-file-pdf-o"></i> ใบกำกับภาษี/e-Tax
-         </a>  		  
+         <a onclick="generateETax(
+          '<?php echo $sales_id; ?>',
+          '<?php echo addslashes($store_name); ?>',
+          '<?php echo addslashes($company_address); ?>',
+          '<?php echo $city_code; ?>',
+          '<?php echo $state_code; ?>',
+          '<?php echo $country_code; ?>',
+          '<?php echo $tot_discount_to_all_amt; ?>'
+        )" class="btn btn-success">
+          <i class="fa fa-file-pdf-o"></i>สร้างใบกำกับภาษี
+        </a> 		  
         </div>
 
      </div>
@@ -690,106 +759,94 @@
 <!-- Make sidebar menu hughlighter/selector -->
 <script>$(".sales-list-active-li").addClass("active");</script>
 <script>
-function generateETax(salesId) {
+function generateETax(salesId, store_name, company_address, city_code, state_code, country_code, tot_discount_to_all_amt) {
+
     const baseUrl = "<?php echo $base_url; ?>";
     const htmlUrl = baseUrl + 'sales/print_invoice/' + salesId;
+    const itemsUrl = baseUrl + 'sales/get_sales_items_json/' + salesId;
     const filename = 'INV-' + salesId;
 
+    // ดึง HTML template ก่อน
     $.get(htmlUrl, function(htmlContent) {
-        const body = {
-            content: htmlContent,
-            xml: {
-                invoiceNumber: filename,
-                invoiceDate: "2025-03-26T00:00:00",
-                referenceNumber: null,
-                seller: {
-                    name: "ร้านตัวอย่าง",
-                    address: {
-                        line: " หมู่ 5",
-                        houseNo: "99",
-                        subDistrict: "400101",
-                        district: "4001",
-                        province: "40",
-                        postalCode: "40000"
-                    },
-                    taxId: "3450100558212",
-                    branch: "สำนักงานใหญ่",
-                    phone: "021256347",
-                    mobile: "0651478521",
-                    email: "phust999@gmail.com"
-                },
-                buyer: {
-                    name: "คุณณัชกาญจน์ ขำดี",
-                    address: "125 หมู่ 4 ลำลูกกา กรุงเทพฯ 11000",
-                    postalCode: "11000",
-                    taxId: "0012365478541",
-                    mobile: "0651245785",
-                    email: "cust@gmail.com"
-                },
-                items: [
-                    {
-                        no: 1,
-                        description: "เสื้อยืด-แดง",
-                        quantity: 2,
-                        unitPrice: 150.00,
-                        isVatIncluded: true,
-                        discount: 40.00,
-                        vatRate: 7.00
-                    },
-                    {
-                        no: 2,
-                        description: "ข้าวสาวหอมมะลิ",
-                        quantity: 2,
-                        unitPrice: 290.00,
-                        isVatIncluded: false,
-                        discount: 58.00,
-                        vatRate: 0.00
-                    },
-                    {
-                        no: 3,
-                        description: "คิวบิค",
-                        quantity: 2,
-                        unitPrice: 100.00,
-                        isVatIncluded: false,
-                        discount: 0.00,
-                        vatRate: 7.00
-                    }
-                ],
-                note: "เอกสารฉบับนี้ใช้สำหรับส่งมอบสินค้าหรือบริการเท่านั้น",
-                globalDiscountAmount: 100
-            }
-        };
+        // ดึงรายการสินค้า
+        $.getJSON(itemsUrl, function(saleItems) {
+          const items = saleItems.map((item, index) => ({
+            no: index + 1,
+            description: item.db_item_name || item.description || "สินค้าไม่มีชื่อ",
+            quantity: parseFloat(item.sales_qty),
+            unitPrice: parseFloat(item.price_per_unit),
+            isVatIncluded: item.tax_type === 'Inclusive' && parseFloat(item.tax) > 0,
+            discount: parseFloat(item.discount_amt),
+            vatRate: parseFloat(item.tax)
+          }));
 
-        // เรียก POST แล้วโหลดเป็นไฟล์
-        fetch(`https://api.tax.sunscaleup.com/invoices/generate/${filename}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-                // "Authorization": "Bearer your-token" // ถ้ามี
-            },
-            body: JSON.stringify(body)
-        })
-        .then(response => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.blob(); // ดึงเป็นไฟล์
-        })
-        .then(blob => {
-            const downloadUrl = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = downloadUrl;
-            a.download = `${filename}.pdf`; // หรือ .pdf แล้วแต่ API ส่งกลับ
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            URL.revokeObjectURL(downloadUrl); // ล้าง
-        })
-        .catch(error => {
-            alert("ส่งข้อมูลไม่สำเร็จ: " + error.message);
-            console.error(error);
+            const body = {
+                content: htmlContent,
+                xml: {
+                    invoiceNumber: filename,
+                    invoiceDate: `<?php echo $iso_datetime ?? ""; ?>`, // เวลาปัจจุบัน
+                    referenceNumber: null,
+                    seller: {
+                        name: store_name,
+                        address: {
+                            line: company_address,
+                            houseNo: "-",
+                            subDistrict: city_code,
+                            district: state_code,
+                            province: country_code,
+                            postalCode: `<?php echo $company_postcode ?? ""; ?>`
+                        },
+                        taxId: `<?php echo addslashes($company_gst_no) ?? ""; ?>`,
+                        branch: `<?php echo addslashes($company_pan_no) ?? ""; ?>`,
+                        phone: `<?php echo $company_mobile ?? ""; ?>`,
+                        mobile: `<?php echo $company_phone ?? ""; ?>`,
+                        email: `<?php echo $company_email ?? ""; ?>`,
+                    },
+                    buyer: {
+                      name: `<?php echo addslashes($customer_name); ?>`,
+                      address: `<?php echo addslashes($customer_address); ?>`,
+                      postalCode: `<?php echo $customer_postcode ?? ""; ?>`,
+                      taxId: `<?php echo $customer_gst_no ?? ""; ?>`,
+                      mobile: `<?php echo $customer_mobile ?? ""; ?>`,
+                      email: `<?php echo $customer_email ?? ""; ?>`
+                    },
+                    items: items,
+                    note: "เอกสารฉบับนี้ได้จัดทำ ขึ้นอย่างสมบูรณ์แล้ว โดยไม่ต้องมีลายเซ็นต์ของเจ้าหน้าที่บริษัทแต่อย่างใด",
+                    globalDiscountAmount: tot_discount_to_all_amt // หรือให้ดึงจากฐานข้อมูลก็ได้
+                }
+            };
+
+            fetch(`https://api.tax.sunscaleup.com/invoices/generate/${filename}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                    // "Authorization": "Bearer your-token" // หากมี token
+                },
+                body: JSON.stringify(body)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.blob();
+            })
+            .then(blob => {
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = downloadUrl;
+                a.download = `${filename}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+            })
+            .catch(error => {
+                alert("เกิดข้อผิดพลาดในการส่ง e-Tax: " + error.message);
+                console.error(error);
+            });
         });
     });
 }
 </script>
+
 
 
 </body>

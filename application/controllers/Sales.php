@@ -427,4 +427,22 @@ class Sales extends MY_Controller {
 		echo $this->sales->return_quotation_list($quotation_id);
 	}
 	
+	// Controller: Sales.php
+	public function get_sales_items_json($sales_id) {
+		$store_id = get_current_store_id(); // ใช้ store ปัจจุบัน
+	
+		$items = $this->db
+			->select("a.description, a.sales_qty, a.price_per_unit, b.tax, a.discount_amt, a.tax_type, a.tax_amt, a.item_id, i.item_name AS db_item_name")
+			->from("db_salesitems a")
+			->join("db_tax b", "b.id = a.tax_id", "left")
+			->join("db_items i", "i.count_id = a.item_id AND i.store_id = '$store_id'", "left")
+			->where("a.sales_id", $sales_id)
+			->get()
+			->result();
+	
+		echo json_encode($items);
+	}
+	
+
+
 }
